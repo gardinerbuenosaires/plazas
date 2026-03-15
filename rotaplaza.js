@@ -4,15 +4,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     setDoc, deleteDoc, addDoc, query, orderBy, limit, writeBatch, getDocs, getDoc
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDjH11Vi2L8hA0extiWtSRqWJATcUZw9IM",
-    authDomain: "plazasgr.firebaseapp.com",
-    projectId: "plazasgr",
-    storageBucket: "plazasgr.firebasestorage.app",
-    messagingSenderId: "139879851809",
-    appId: "1:139879851809:web:bb711dc80467499c390060"
-  };
+  import { firebaseConfig } from "./config.js";
 
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
@@ -75,7 +67,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     document.getElementById("loader").style.display="none";
     document.body.innerHTML=`
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:24px;padding:20px">
-        <img src="img/LogoGR.png" alt="Sistemalf Plaza" style="height:48px;opacity:.8"/>
+        <img src="img/Logo.png" alt="Sistemalf Plaza" style="height:48px;opacity:.8"/>
         <h1 style="color:var(--gold2);font-size:22px;text-align:center">Sistemalf Plaza</h1>
         <p style="color:var(--text3);font-size:13px">Seleccioná el turno</p>
         <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
