@@ -75,7 +75,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     document.getElementById("loader").style.display="none";
     document.body.innerHTML=`
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:24px;padding:20px">
-        <img src="img/LogoH55.png" alt="Sistemalf Plaza" style="height:48px;opacity:.8"/>
+        <img src="img/LogoGR.png" alt="Sistemalf Plaza" style="height:48px;opacity:.8"/>
         <h1 style="color:var(--gold2);font-size:22px;text-align:center">Sistemalf Plaza</h1>
         <p style="color:var(--text3);font-size:13px">Seleccioná el turno</p>
         <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
