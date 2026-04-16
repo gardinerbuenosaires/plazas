@@ -1201,15 +1201,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     mDisp.forEach(m=>{
       for(const h of historialReciente){
         if(h.mozoId!==m.id) continue;
-        const sl=
-          (h.slotId&&slots.find(s=>s.slotId===h.slotId))||
-          (h.subsector?slots.find(s=>s.ssNombre===h.subsector&&s.sectorNombre===h.sector):null)||
-          (!h.subsector?slots.find(s=>s.sectorNombre===h.sector&&!s.ssNombre):null);
-        if(sl){
-          ultimoGrupoPorMozo[m.id]=grupoDeId(sl.sectorId);
-          ultimoSlotPorMozo[m.id]=sl.slotId;
-          break;
-        }
+        if(h.tipo==="notas"||!h.slotId) continue;
+        ultimoGrupoPorMozo[m.id]=grupoDeId(h.slotId.split("___")[0]);
+        ultimoSlotPorMozo[m.id]=h.slotId;
+        break;
       }
     });
 
@@ -1338,7 +1333,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
           const penRep=penEvitarRepetir(largo.id,sectorId);
           const penDom=slotsDelSector.some(sl=>slotDomingoPorMozo[largo.id]===sl.slotId)?1:0;
           const penUltimoSlot=slotsDelSector.some(sl=>ultimoSlotPorMozo[largo.id]===sl.slotId)?1:0;
-          return dist*10000+penUltimoSlot*2000+penRep*1000+penDom*500+vecesSector*10+li;
+          return dist*10000+penUltimoSlot*12000+penRep*1000+penDom*500+vecesSector*10+li;
         })
       );
 
@@ -1379,7 +1374,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const mozosUsados=new Set();
 
     // Construir matriz de costos (mozos en orden circular × slots)
-    // Pesos: dist×10000 + penUltimoSlot×2000 + penRepetir×1000 + penDomingo×500 + veces×10 + circularPos
+    // Pesos: dist×10000 + penUltimoSlot×12000 + penRepetir×1000 + penDomingo×500 + veces×10 + circularPos
     // Las restricciones se marcan con INF para excluirlas de la asignación óptima
     const mozosCirular = Array.from({length:n}, (_,mi) => mozosLibres[(idx+mi)%n]);
     const costMatrix = mozosCirular.map((mozo,mi) =>
@@ -1390,7 +1385,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
         const penRepetir=penEvitarRepetir(mozo.id,slot.sectorId);
         const penDomingo=(slotDomingoPorMozo[mozo.id]===slot.slotId)?1:0;
         const veces=conteo[mozo.id]?.[slot.slotId]||0;
-        return dist*10000 + penUltimoSlot*2000 + penRepetir*1000 + penDomingo*500 + veces*10 + mi;
+        return dist*10000 + penUltimoSlot*12000 + penRepetir*1000 + penDomingo*500 + veces*10 + mi;
       })
     );
 
@@ -1837,11 +1832,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     mDisp.forEach(m=>{
       for(const h of historialReciente){
         if(h.mozoId!==m.id) continue;
-        const sl=
-          (h.slotId&&slots.find(s=>s.slotId===h.slotId))||
-          (h.subsector?slots.find(s=>s.ssNombre===h.subsector&&s.sectorNombre===h.sector):null)||
-          (!h.subsector?slots.find(s=>s.sectorNombre===h.sector&&!s.ssNombre):null);
-        if(sl){ ultimoGrupoPorMozo[m.id]=grupoDeId(sl.sectorId); ultimoSlotPorMozo[m.id]=sl.slotId; break; }
+        if(h.tipo==="notas"||!h.slotId) continue;
+        ultimoGrupoPorMozo[m.id]=grupoDeId(h.slotId.split("___")[0]);
+        ultimoSlotPorMozo[m.id]=h.slotId;
+        break;
       }
     });
     const grupoIdealPorMozo={};
