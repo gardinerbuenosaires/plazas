@@ -437,10 +437,24 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     return `${y}-${m}-${day}`;
   }
 
+  function getAyerSlotPorMozo() {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const ayerFin = hoy.getTime() - 1;
+    const ayerInicio = ayerFin - 86399999;
+    const ayerRecs = historial.filter(h => h.ts >= ayerInicio && h.ts <= ayerFin && h.tipo !== "notas");
+    if (!ayerRecs.length) return {};
+    const rotId = ayerRecs[0]?.rotacionId;
+    const recs = rotId ? ayerRecs.filter(h => h.rotacionId === rotId) : ayerRecs;
+    const map = {};
+    recs.forEach(h => { if (h.mozoId && h.slotId) map[h.mozoId] = h.slotId; });
+    return map;
+  }
+
   function renderSectoresGrid() {
     const grid=document.getElementById("sectores-grid");
     if(sectores.length===0){grid.innerHTML=`<div class="empty">No hay sectores. Creá uno en Sectores.</div>`;return;}
 
+    const ayerMap = getAyerSlotPorMozo();
     let html=`<div class="slots-grid">`;
 
     let firstSector=true;
@@ -468,7 +482,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
             onpointerup="cancelLongPress()" onpointerleave="cancelLongPress()">`;
           html+=`<span class="ss-nombre">${ss["nombre_"+turno]||ss.nombre}</span>`;
           if(mozo){
-            html+=`<span class="ss-mozo">${mozo.nombre}${mozo.largo?' <b style="background:#c03020;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle">L</b>':''}</span>`;
+            const repite = ayerMap[mozo.id] === slotId;
+            html+=`<span class="ss-mozo">${mozo.nombre}${mozo.largo?' <b style="background:#c03020;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle">L</b>':''}${asig.manual?' <b style="background:#1a8090;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="Asignado manualmente">M</b>':''}${repite?' <b style="background:#c97c20;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="Repite sector de ayer">↩</b>':''}</span>`;
             if(asig.comentario) html+=`<span class="ss-desc" style="color:#f0c060;font-style:italic">💬 ${asig.comentario}</span>`;
             else if(ss.descripcion) html+=`<span class="ss-desc">${ss.descripcion}</span>`;
             if(!formacionBloqueada) html+=`<button class="ss-liberar" onclick="event.stopPropagation();liberarSlot('${slotId}')">Liberar</button>`;
@@ -489,7 +504,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
           onpointerup="cancelLongPress()" onpointerleave="cancelLongPress()">`;
         html+=`<span class="ss-nombre">${s.nombre}</span>`;
         if(mozo){
-          html+=`<span class="ss-mozo">${mozo.nombre}${mozo.largo?' <b style="background:#c03020;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle">L</b>':''}</span>`;
+          const repite = ayerMap[mozo.id] === slotId;
+          html+=`<span class="ss-mozo">${mozo.nombre}${mozo.largo?' <b style="background:#c03020;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle">L</b>':''}${asig.manual?' <b style="background:#1a8090;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="Asignado manualmente">M</b>':''}${repite?' <b style="background:#c97c20;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="Repite sector de ayer">↩</b>':''}</span>`;
           if(asig.comentario) html+=`<span class="ss-desc" style="color:#f0c060;font-style:italic">💬 ${asig.comentario}</span>`;
           else if(s.descripcion) html+=`<span class="ss-desc">${s.descripcion}</span>`;
           if(!formacionBloqueada) html+=`<button class="ss-liberar" onclick="event.stopPropagation();liberarSlot('${slotId}')">Liberar</button>`;
@@ -1080,7 +1096,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
         html+=`<div class="rotacion-chip">`;
         html+=`<span class="rotacion-chip-ss">${ssNombre}</span>`;
         const esLargo=mozos.find(m=>m.id===h.mozoId)?.largo;
-        html+=`<span class="rotacion-chip-mozo">${resolverNombreMozo(h)||"—"}${esLargo?' <b style="background:#c03020;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle">L</b>':''}</span>`;
+        html+=`<span class="rotacion-chip-mozo">${resolverNombreMozo(h)||"—"}${esLargo?' <b style="background:#c03020;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle">L</b>':''}${h.manual?' <b style="background:#1a8090;color:#fff;font-size:11px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="Asignado manualmente">M</b>':''}</span>`;
         if(h.comentario) html+=`<span style="font-size:9px;color:#f0c060;font-style:italic">💬 ${h.comentario}</span>`;
         html+=`</div>`;
       });
@@ -1564,7 +1580,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       const asig=asignaciones[sl.slotId];
       if(!asig) return;
       const mozo=mozos.find(m=>m.id===asig.mozoId);
-      if(mozo){const h={mozoId:asig.mozoId,mozoNombre:mozo.nombre,sector:sl.sectorNombre,subsector:sl.ssNombre||"",slotId:sl.slotId,tipo:"mozo",ts:ahora};if(asig.comentario)h.comentario=asig.comentario;histActual.push(h);}
+      if(mozo){const h={mozoId:asig.mozoId,mozoNombre:mozo.nombre,sector:sl.sectorNombre,subsector:sl.ssNombre||"",slotId:sl.slotId,tipo:"mozo",ts:ahora};if(asig.comentario)h.comentario=asig.comentario;if(asig.manual)h.manual=true;histActual.push(h);}
     });
     // Barra
     const slotsBar=getSlotsBar();
@@ -1687,10 +1703,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const ahora=Date.now();
     if(pendingHistorial&&pendingHistorial.length>0){
       // En modo edición/rotación pendiente: solo asignar, el historial se graba al confirmar
-      await setDoc(doc(asigCol,popupSlotId),{mozoId,desde:ahora});
+      await setDoc(doc(asigCol,popupSlotId),{mozoId,desde:ahora,manual:true});
     } else {
       // Asignación suelta: solo asignar, el historial se graba al confirmar
-      await setDoc(doc(asigCol,popupSlotId),{mozoId,desde:ahora});
+      await setDoc(doc(asigCol,popupSlotId),{mozoId,desde:ahora,manual:true});
     }
     cerrarPopup();
   };
