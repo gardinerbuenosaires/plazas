@@ -338,6 +338,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const p2ok=conFija.length>0;
     const p2txt=p2ok?`${conFija.length} fija${conFija.length!==1?"s":""} ✓`:"ninguna";
 
+    // Aviso criterio semanal
+    const diaSemana=new Date().getDay();
+    const nombresDias={0:"domingo",4:"jueves",5:"viernes",6:"sábado"};
+    const aplicaCriterio=(turno==="manana"&&diaSemana===0)||(turno==="noche"&&[4,5,6].includes(diaSemana));
+    const turnoColor=TURNO_COLORES[turno]||TURNO_COLORES.manana;
+    const avisoSemanal=aplicaCriterio
+      ?`<div style="font-size:11px;color:${turnoColor.accent};background:${turnoColor.bg};border:1px solid ${turnoColor.accent};border-radius:8px;padding:7px 12px;margin-bottom:10px">↺ Hoy es <strong>${nombresDias[diaSemana]}</strong>: la rotación evita repetir la plaza que cada mozo tuvo el ${nombresDias[diaSemana]} pasado.</div>`
+      :"";
+
     // Paso 3: asignaciones manuales del día
     const p3ok=manualesHoy.length>0;
     const p3txt=p3ok?`${manualesHoy.length} asignada${manualesHoy.length!==1?"s":""} ✓`:"ninguna (opcional)";
@@ -352,7 +361,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
         ?`faltan ${deficit} mozo${deficit!==1?"s":""} ⚠`
         :`sobran ${-deficit} mozo${-deficit!==1?"s":""} ⚠`;
 
-    el.innerHTML=`
+    el.innerHTML=avisoSemanal+`
       <div class="checklist-pasos">
         <div class="checklist-header">Antes de generar — verificá estos pasos</div>
         <div class="cpaso" onclick="switchTab('personal',document.querySelector('.tab-btn:nth-child(2)'))">
@@ -1422,22 +1431,24 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       return (ultimoGrupoPorMozo[mozoId]===grupoSlot)?1:0;
     }
 
-    // Penalización dominical (turno mañana)
-    const slotDomingoPorMozo={};
-    if(new Date().getDay()===0&&turno==="manana"){
+    // Penalización semanal: evitar repetir plaza del mismo día de la semana anterior
+    // (domingo mañana, y jueves/viernes/sábado noche)
+    const slotSemAnteriorPorMozo={};
+    const diasCriterio=turno==="manana"?[0]:turno==="noche"?[4,5,6]:[];
+    if(diasCriterio.includes(new Date().getDay())){
       const hoy=new Date(); hoy.setHours(0,0,0,0);
-      const domAnterior=new Date(hoy); domAnterior.setDate(hoy.getDate()-7);
-      const tsDomInicio=domAnterior.getTime();
-      const tsDomFin=tsDomInicio+24*60*60*1000-1;
-      const histDom=historial.filter(h=>h.ts>=tsDomInicio&&h.ts<=tsDomFin&&h.tipo!=="notas");
+      const diaAnterior=new Date(hoy); diaAnterior.setDate(hoy.getDate()-7);
+      const tsDiaInicio=diaAnterior.getTime();
+      const tsDiaFin=tsDiaInicio+24*60*60*1000-1;
+      const histDia=historial.filter(h=>h.ts>=tsDiaInicio&&h.ts<=tsDiaFin&&h.tipo!=="notas");
       mDisp.forEach(m=>{
-        const hDom=histDom.find(h=>h.mozoId===m.id);
-        if(!hDom) return;
+        const hDia=histDia.find(h=>h.mozoId===m.id);
+        if(!hDia) return;
         const sl=
-          (hDom.slotId&&slots.find(s=>s.slotId===hDom.slotId))||
-          (hDom.subsector?slots.find(s=>s.ssNombre===hDom.subsector&&s.sectorNombre===hDom.sector):null)||
-          (!hDom.subsector?slots.find(s=>s.sectorNombre===hDom.sector&&!s.ssNombre):null);
-        if(sl) slotDomingoPorMozo[m.id]=sl.slotId;
+          (hDia.slotId&&slots.find(s=>s.slotId===hDia.slotId))||
+          (hDia.subsector?slots.find(s=>s.ssNombre===hDia.subsector&&s.sectorNombre===hDia.sector):null)||
+          (!hDia.subsector?slots.find(s=>s.sectorNombre===hDia.sector&&!s.ssNombre):null);
+        if(sl) slotSemAnteriorPorMozo[m.id]=sl.slotId;
       });
     }
 
@@ -1520,7 +1531,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
           const vecesSector=slotsDelSector.reduce((sum,sl)=>sum+(conteo[largo.id]?.[sl.slotId]||0),0);
           const dist=distanciaGrupo(largo.id,sectorId);
           const penRep=penEvitarRepetir(largo.id,sectorId);
-          const penDom=slotsDelSector.some(sl=>slotDomingoPorMozo[largo.id]===sl.slotId)?1:0;
+          const penDom=slotsDelSector.some(sl=>slotSemAnteriorPorMozo[largo.id]===sl.slotId)?1:0;
           const penUltimoSlot=slotsDelSector.some(sl=>ultimoSlotPorMozo[largo.id]===sl.slotId)?1:0;
           return dist*10000+penUltimoSlot*12000+penRep*1000+penDom*500+vecesSector*10+li;
         })
@@ -1578,7 +1589,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
           const dist=distanciaGrupo(mozo.id,slot.sectorId);
           const penUltimoSlot=(ultimoSlotPorMozo[mozo.id]===slot.slotId)?1:0;
           const penRepetir=penEvitarRepetir(mozo.id,slot.sectorId);
-          const penDomingo=(slotDomingoPorMozo[mozo.id]===slot.slotId)?1:0;
+          const penDomingo=(slotSemAnteriorPorMozo[mozo.id]===slot.slotId)?1:0;
           const veces=conteo[mozo.id]?.[slot.slotId]||0;
           return dist*10000 + penUltimoSlot*12000 + penRepetir*1000 + penDomingo*500 + veces*10 + mi;
         })
