@@ -158,7 +158,7 @@ select{appearance:none}
   #header, #tabs, #stats, #aviso-global,
   #rotar-aviso, #btn-rotar, #btn-pdf, #rotar-hint, #pendiente-banner,
   .section-title, #libres-section, #btn-liberar-todo,
-  #acciones-formacion,
+  #acciones-formacion, #pasos-previos, #feedback-strip, #feedback-tooltip,
   #tab-personal, #tab-sectores, #tab-historial { display: none !important; }
   body { background: #fff !important; color: #000 !important; font-family: 'DM Sans', sans-serif; margin: 0; font-size: 10px !important; }
   #app, #main, #tab-operacion { display: block !important; }

@@ -102,10 +102,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       const d=document.getElementById("nota-dolar");
       const s=document.getElementById("nota-sugerencia");
       const f=document.getElementById("nota-faltantes");
+      const nv=document.getElementById("nota-novedades");
       if(p&&p!==document.activeElement) p.value=notas.pesca||"";
       if(d&&d!==document.activeElement) d.value=notas.dolar||"";
       if(s&&s!==document.activeElement) s.value=notas.sugerencia||"";
       if(f&&f!==document.activeElement) f.value=notas.faltantes||"";
+      if(nv&&nv!==document.activeElement) nv.value=notas.novedades||"";
     }
   });
 
@@ -404,7 +406,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const btnLib=document.getElementById("btn-liberar-todo");
     if(btnLib) btnLib.style.display=Object.keys(asignaciones).length>0?"inline-block":"none";
     renderSectoresGrid(); renderLibres(); renderPersonal(); renderSectoresConfig(); renderBarraGrid(); renderPeonesGrid();
-    ["nota-pesca","nota-dolar","nota-sugerencia","nota-faltantes"].forEach(id=>{const el=document.getElementById(id);if(el) el.disabled=formacionBloqueada;});
+    ["nota-pesca","nota-dolar","nota-sugerencia","nota-faltantes","nota-novedades"].forEach(id=>{const el=document.getElementById(id);if(el) el.disabled=formacionBloqueada;});
     const ns=document.getElementById("notas-section"); if(ns) ns.style.display=notasActivas?"":"none";
   }
 
@@ -1696,8 +1698,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     oldSnap.docs.forEach(d=>batch.delete(d.ref));
 
     // Guardar notas como parte de la rotación
-    if(notasActivas&&(notas.pesca||notas.dolar||notas.sugerencia||notas.faltantes)){
-      histActual.push({tipo:"notas",pesca:notas.pesca||"",dolar:notas.dolar||"",sugerencia:notas.sugerencia||"",faltantes:notas.faltantes||"",ts:ahora});
+    if(notasActivas&&(notas.pesca||notas.dolar||notas.sugerencia||notas.faltantes||notas.novedades)){
+      histActual.push({tipo:"notas",pesca:notas.pesca||"",dolar:notas.dolar||"",sugerencia:notas.sugerencia||"",faltantes:notas.faltantes||"",novedades:notas.novedades||"",ts:ahora});
     }
 
     // Guardar nuevos registros
@@ -1807,14 +1809,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     if(!confirm(`¿Liberar los ${ocupadas.length} slot${ocupadas.length>1?"s":""} asignados (mozos, barra y peones)?`)) return;
     const batch=writeBatch(db);
     ocupadas.forEach(id=>batch.delete(doc(asigCol,id)));
-    batch.set(doc(db,"meta","notas"+metaSuffix),{pesca:"",dolar:"",sugerencia:"",faltantes:""});
+    batch.set(doc(db,"meta","notas"+metaSuffix),{pesca:"",dolar:"",sugerencia:"",faltantes:"",novedades:""});
     batch.set(doc(db,"meta","ultimaRotacion"+metaSuffix),{ts:Date.now(),notas:{},rotacionId:null,editableHasta:null});
     await batch.commit();
-    notas={pesca:"",dolar:"",sugerencia:"",faltantes:""};
+    notas={pesca:"",dolar:"",sugerencia:"",faltantes:"",novedades:""};
     const np=document.getElementById("nota-pesca"); if(np) np.value="";
     const nd=document.getElementById("nota-dolar"); if(nd) nd.value="";
     const ns=document.getElementById("nota-sugerencia"); if(ns) ns.value="";
     const nf=document.getElementById("nota-faltantes"); if(nf) nf.value="";
+    const nnv=document.getElementById("nota-novedades"); if(nnv) nnv.value="";
     pendingHistorial=[];
     ultimaRotacionId=null;
     editableHastaLocal=null;
@@ -2444,7 +2447,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     }
 
     // Notas del turno
-    const tieneNotas = notas.pesca||notas.dolar||notas.sugerencia||notas.faltantes;
+    const tieneNotas = notas.pesca||notas.dolar||notas.sugerencia||notas.faltantes||notas.novedades;
     if(tieneNotas&&notasActivas){
       html += `<div class="pres-sector-label" style="color:var(--text2);border-color:var(--border2)">📝 Notas</div>`;
       html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">`;
@@ -2452,6 +2455,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       if(notas.dolar) html+=`<div style="flex:0 0 auto;border:1px solid var(--border2);border-radius:6px;padding:6px 10px"><span style="font-size:9px;color:var(--text3);text-transform:uppercase">💲 Dólar</span><div style="font-size:15px;font-weight:700;color:var(--gold2);margin-top:2px">${notas.dolar}</div></div>`;
       if(notas.sugerencia) html+=`<div style="flex:1;min-width:120px;border:1px solid var(--border2);border-radius:6px;padding:6px 10px"><span style="font-size:9px;color:var(--text3);text-transform:uppercase">💡 Sugerencia</span><div style="font-size:13px;color:var(--text);margin-top:2px;white-space:pre-wrap">${notas.sugerencia}</div></div>`;
       if(notas.faltantes) html+=`<div style="flex:1;min-width:120px;border:1px solid var(--border2);border-radius:6px;padding:6px 10px"><span style="font-size:9px;color:var(--text3);text-transform:uppercase">⚠️ Faltantes</span><div style="font-size:12px;color:#f0a060;margin-top:2px;white-space:pre-wrap">${notas.faltantes}</div></div>`;
+      if(notas.novedades) html+=`<div style="flex:1 1 100%;border:1px solid var(--border2);border-radius:6px;padding:6px 10px"><span style="font-size:9px;color:var(--text3);text-transform:uppercase">📋 Novedades</span><div style="font-size:13px;color:var(--text);margin-top:2px;white-space:pre-wrap">${notas.novedades}</div></div>`;
       html += `</div>`;
     }
 
@@ -2572,7 +2576,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
         pesca: document.getElementById("nota-pesca")?.value||"",
         dolar: document.getElementById("nota-dolar")?.value||"",
         sugerencia: document.getElementById("nota-sugerencia")?.value||"",
-        faltantes: document.getElementById("nota-faltantes")?.value||""
+        faltantes: document.getElementById("nota-faltantes")?.value||"",
+        novedades: document.getElementById("nota-novedades")?.value||""
       };
       notas=data;
       setDoc(doc(db,"meta","notas"+metaSuffix),data);
