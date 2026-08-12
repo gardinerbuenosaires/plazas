@@ -50,7 +50,7 @@
     <button class="tab-btn"        onclick="switchTab('barra',this)">🍸 Barra</button>
     <button class="tab-btn"        onclick="switchTab('peones',this)">🧹 Peones</button>
     <button class="tab-btn"        onclick="switchTab('rotaciones',this)">🔄 Plazas</button>
-    <button class="tab-btn"        onclick="switchTab('informe',this)">📊 Balance 30</button>
+    <button class="tab-btn"        onclick="switchTab('informe',this)">📊 Estadísticas</button>
     <button class="tab-btn"        onclick="switchTab('historial',this)">📋 Historial</button>
   </div>
 
@@ -258,8 +258,19 @@
     <!-- INFORME -->
     <div id="tab-informe" class="tab-content">
       <div class="section">
-        <div class="section-title">📊 Balance 30 — últimos 30 días
+        <div class="section-title">📊 Estadísticas — <span id="informe-rango-label">últimos 30 días</span>
           <button class="btn btn-ghost" id="btn-imprimir-informe" onclick="imprimirInforme()" style="font-size:11px">🖨 Imprimir</button>
+        </div>
+        <div id="informe-filtros" style="margin-bottom:10px">
+          <select id="informe-rango" onchange="window.cambiarInformeParams && window.cambiarInformeParams()" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box">
+            <option value="7">Últimos 7 días</option>
+            <option value="15">Últimos 15 días</option>
+            <option value="30">Últimos 30 días</option>
+            <option value="60">Últimos 60 días</option>
+            <option value="90">Últimos 90 días</option>
+          </select>
+          <!-- Chips generados desde TIPOS_MOZO en rotaplaza.js -->
+          <div id="informe-tipos" class="chips" style="margin:8px 0 0"></div>
         </div>
         <div id="informe-empty" class="empty" style="display:none">No hay datos en los últimos 30 días.</div>
         <div id="informe-table" style="overflow:auto;max-height:70vh"></div>
@@ -322,6 +333,11 @@
     <div style="margin:14px 0 8px">
       <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">NOMBRE</label>
       <input type="text" id="edit-nombre" style="width:100%"/>
+    </div>
+    <div id="edit-tipo-row" style="margin-bottom:14px;display:none">
+      <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">TIPO DE TURNO</label>
+      <!-- Opciones generadas desde TIPOS_MOZO en rotaplaza.js -->
+      <select id="edit-tipo" style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none"></select>
     </div>
     <div id="edit-desc-row" style="margin-bottom:14px;display:none">
       <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">DESCRIPCIÓN</label>

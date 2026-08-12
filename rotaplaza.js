@@ -405,7 +405,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     renderStats(); renderAvisoGlobal(); renderAvisoRotacion(); renderUltimaRotacion(); renderPasosPrevios();
     const btnLib=document.getElementById("btn-liberar-todo");
     if(btnLib) btnLib.style.display=Object.keys(asignaciones).length>0?"inline-block":"none";
-    renderSectoresGrid(); renderLibres(); renderPersonal(); renderSectoresConfig(); renderBarraGrid(); renderPeonesGrid();
+    renderSectoresGrid(); renderLibres(); renderPersonal(); renderSectoresConfig(); renderBarraGrid(); renderPeonesGrid(); renderInforme();
     ["nota-pesca","nota-dolar","nota-sugerencia","nota-faltantes","nota-novedades"].forEach(id=>{const el=document.getElementById(id);if(el) el.disabled=formacionBloqueada;});
     const ns=document.getElementById("notas-section"); if(ns) ns.style.display=notasActivas?"":"none";
   }
@@ -1001,16 +1001,100 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     resumenTable.innerHTML = html;
   }
 
+  // ── Parámetros configurables de Estadísticas (rango en días y tipo de mozo) ──
+  // Para sumar un tipo nuevo alcanza con agregarlo acá: aparece solo en el
+  // filtro del informe y en el modal de edición.
+  const TIPOS_MOZO=[
+    {id:"cortado",     label:"Cortado",            plural:"Cortados",           badge:"",   color:""},
+    {id:"largo",       label:"Largo",              plural:"Largos",             badge:"L",  color:"#c03020"},
+    {id:"medioManana", label:"Medio turno mañana", plural:"Medio turno mañana", badge:"MM", color:"#c9933a"},
+    {id:"medioNoche",  label:"Medio turno noche",  plural:"Medio turno noche",  badge:"MN", color:"#3c78b4"}
+  ];
+  const TIPO_MOZO_DEFAULT="cortado";
+  const INFORME_RANGOS=[7,15,30,60,90];
+  const TODOS_LOS_TIPOS=()=>TIPOS_MOZO.map(t=>t.id);
+  let informeRango=30, informeTipos=TODOS_LOS_TIPOS();
+  try {
+    const r=parseInt(localStorage.getItem("informeRango"),10);
+    if(INFORME_RANGOS.includes(r)) informeRango=r;
+    const raw=localStorage.getItem("informeTipos");
+    if(raw){
+      informeTipos=JSON.parse(raw).filter(id=>TIPOS_MOZO.some(x=>x.id===id));
+    } else {
+      // Migración del filtro de selección única anterior
+      const viejo=localStorage.getItem("informeTipo");
+      if(viejo&&viejo!=="todos"&&TIPOS_MOZO.some(x=>x.id===viejo)) informeTipos=[viejo];
+    }
+  } catch(e){}
+
+  // Tipo del mozo; si no está marcado o el valor es desconocido, cae al default
+  function tipoDeMozo(mozoId) {
+    const t=mozos.find(m=>m.id===mozoId)?.tipoMozo;
+    return TIPOS_MOZO.some(x=>x.id===t)?t:TIPO_MOZO_DEFAULT;
+  }
+  function infoTipoMozo(id) { return TIPOS_MOZO.find(x=>x.id===id)||TIPOS_MOZO[0]; }
+
+  // Poblar el select del modal desde TIPOS_MOZO (el script es module: el DOM ya está listo)
+  (function poblarSelectTipo(){
+    const selEdit=document.getElementById("edit-tipo");
+    if(selEdit) selEdit.innerHTML=TIPOS_MOZO.map(t=>`<option value="${t.id}">${t.label}</option>`).join("");
+  })();
+
+  function guardarInformePrefs() {
+    try {
+      localStorage.setItem("informeRango",String(informeRango));
+      localStorage.setItem("informeTipos",JSON.stringify(informeTipos));
+    } catch(e){}
+  }
+
+  window.cambiarInformeParams = function() {
+    const selR=document.getElementById("informe-rango");
+    if(selR){ const r=parseInt(selR.value,10); if(INFORME_RANGOS.includes(r)) informeRango=r; }
+    guardarInformePrefs(); renderInforme();
+  };
+
+  // Chips multiselección: tocar un tipo lo agrega o lo saca del filtro
+  window.toggleInformeTipo = function(id) {
+    if(!TIPOS_MOZO.some(x=>x.id===id)) return;
+    informeTipos=informeTipos.includes(id)?informeTipos.filter(x=>x!==id):[...informeTipos,id];
+    guardarInformePrefs(); renderInforme();
+  };
+  window.informeTiposTodos = function() {
+    informeTipos=TODOS_LOS_TIPOS();
+    guardarInformePrefs(); renderInforme();
+  };
+
   function renderInforme() {
     const cont=document.getElementById("informe-table");
     const emptyEl=document.getElementById("informe-empty");
     if(!cont||!emptyEl) return;
 
+    // Reflejar el estado persistido en los controles y en el título
+    const selR=document.getElementById("informe-rango"); if(selR) selR.value=String(informeRango);
+    const todosActivos=informeTipos.length===TIPOS_MOZO.length;
+    const chipsEl=document.getElementById("informe-tipos");
+    if(chipsEl) chipsEl.innerHTML=`<span class="chip ${todosActivos?"on":""}" onclick="informeTiposTodos()">Todos</span>`
+      +TIPOS_MOZO.map(t=>`<span class="chip ${informeTipos.includes(t.id)?"on":""}" onclick="toggleInformeTipo('${t.id}')">${t.label}</span>`).join("");
+    const tipoLabel=todosActivos?""
+      :informeTipos.length===0?"ningún tipo"
+      :informeTipos.map(id=>infoTipoMozo(id).plural).join(", ");
+    const lbl=document.getElementById("informe-rango-label");
+    if(lbl) lbl.textContent=`últimos ${informeRango} días${tipoLabel?" · "+tipoLabel:""}`;
+
+    if(informeTipos.length===0){
+      emptyEl.textContent="Seleccioná al menos un tipo de mozo.";
+      emptyEl.style.display="block"; cont.innerHTML=""; return;
+    }
+
     const ahora=Date.now();
-    const treintaDias=ahora-30*24*60*60*1000;
-    const base=historial.filter(h=>h.ts>treintaDias&&(!h.tipo||h.tipo==="mozo")&&h.mozoId&&h.sector);
+    const desde=ahora-informeRango*24*60*60*1000;
+    let base=historial.filter(h=>h.ts>desde&&(!h.tipo||h.tipo==="mozo")&&h.mozoId&&h.sector);
+    if(!todosActivos) base=base.filter(h=>informeTipos.includes(tipoDeMozo(h.mozoId)));
 
     if(base.length===0){
+      emptyEl.textContent=tipoLabel
+        ? `No hay datos de ${tipoLabel} en los últimos ${informeRango} días.`
+        : `No hay datos en los últimos ${informeRango} días.`;
       emptyEl.style.display="block"; cont.innerHTML=""; return;
     }
     emptyEl.style.display="none";
@@ -1051,7 +1135,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     html+=`<th title="Rotaciones en las que participó">Rotaciones</th></tr></thead><tbody>`;
 
     mozosU.forEach(([mozoId,nombre])=>{
-      html+=`<tr><td>${nombre}</td>`;
+      const ti=infoTipoMozo(tipoDeMozo(mozoId));
+      const badgeTipo=ti.badge?` <b style="background:${ti.color};color:#fff;font-size:10px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="${ti.label}">${ti.badge}</b>`:'';
+      html+=`<tr><td>${nombre}${badgeTipo}</td>`;
       sectoresUsados.forEach(s=>{
         const n=sectorCount.get(`${mozoId}||${s}`)||0;
         html+=`<td><span class="resumen-count ${n===0?"zero":""}">${n||"—"}</span></td>`;
@@ -1928,6 +2014,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     document.getElementById("edit-nombre").value=nombre;
     document.getElementById("edit-desc").value=desc;
     document.getElementById("edit-desc-row").style.display=showDesc?"block":"none";
+    const tipoRow=document.getElementById("edit-tipo-row");
+    if(tipoRow){
+      tipoRow.style.display=tipo==="mozo"?"block":"none";
+      if(tipo==="mozo"){
+        const sel=document.getElementById("edit-tipo");
+        if(sel) sel.value=tipoDeMozo(id);
+      }
+    }
     document.getElementById("edit-overlay").classList.add("show");
     setTimeout(()=>document.getElementById("edit-nombre").focus(),100);
   };
@@ -1938,7 +2032,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const {tipo,id,idx}=editCtx;
     const desc=document.getElementById("edit-desc").value.trim();
     if(tipo==="mozo"){
-      await setDoc(doc(mozosCol,id),{nombre},{merge:true});
+      const selTipo=document.getElementById("edit-tipo")?.value;
+      const tipoMozo=TIPOS_MOZO.some(x=>x.id===selTipo)?selTipo:TIPO_MOZO_DEFAULT;
+      await setDoc(doc(mozosCol,id),{nombre,tipoMozo},{merge:true});
     } else if(tipo==="sector"){
       const nombreViejo=sectores.find(s=>s.id===id)?.nombre;
       await setDoc(doc(sectoresCol,id),{nombre,descripcion:desc},{merge:true});

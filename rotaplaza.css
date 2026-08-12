@@ -105,6 +105,9 @@ input[type=text]:focus{border-color:var(--gold)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1px solid;font-size:12px}
 .chip.on{border-color:var(--green);background:rgba(74,143,58,.15);color:var(--green2)}
+/* Chips de filtro de Estadísticas: seleccionables, apagados en gris */
+#informe-tipos .chip{cursor:pointer;user-select:none}
+#informe-tipos .chip:not(.on){border-color:var(--border2);color:var(--text3)}
 /* AVISO */
 .aviso{border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.6;border:1px solid;margin-bottom:12px}
 .aviso.error{background:rgba(143,58,58,.15);border-color:var(--red);color:#f0a0a0}
@@ -205,7 +208,7 @@ select{appearance:none}
   body.turno-noche #ultima-rotacion span:first-child { color: #2a6a80 !important; }
   body.turno-noche #barra-op-section .section-title, body.turno-noche #peones-op-section .section-title { color: #2a6a80 !important; border-bottom-color: #5a8fa0 !important; }
 
-  /* Impresión Balance 30 */
+  /* Impresión Estadísticas */
   body.print-informe #header,
   body.print-informe #tabs,
   body.print-informe #pendiente-banner,
@@ -218,6 +221,10 @@ select{appearance:none}
   body.print-informe #tab-historial { display: none !important; }
   body.print-informe #tab-informe { display: block !important; }
   body.print-informe #btn-imprimir-informe { display: none !important; }
+  /* Los filtros no se imprimen: el rango y el tipo ya van en el título */
+  body.print-informe #informe-filtros { display: none !important; }
+  /* Las badges de tipo (L / MM / MN) sin fondo, que en papel no imprime */
+  body.print-informe .resumen-table td b { background: none !important; color: #000 !important; border: 1px solid #999 !important; }
   body.print-informe { background: #fff !important; color: #000 !important; }
   body.print-informe #main { padding: 4px !important; max-width: 100% !important; }
   body.print-informe .section { background: #fff !important; border: none !important; padding: 0 !important; }
