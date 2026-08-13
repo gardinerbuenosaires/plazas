@@ -153,6 +153,7 @@ input[type=text]:focus{border-color:var(--gold)}
 .resumen-table tr.grupo-tipo td{position:static;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;color:var(--text3);background:var(--bg);padding:10px 8px 4px;border-bottom:1px solid var(--border2)}
 .resumen-count{display:inline-block;min-width:22px;font-weight:600;color:var(--gold2)}
 .resumen-count.zero{color:var(--text3);font-weight:400}
+.resumen-pct{font-size:9px;color:var(--text3);white-space:nowrap}
 .hist-count-badge{display:inline-block;background:rgba(201,147,58,.15);border:1px solid var(--border2);color:var(--gold2);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;text-align:center}
 select{appearance:none}
 
@@ -246,6 +247,7 @@ select{appearance:none}
   body.print-informe .resumen-table tr.grupo-tipo td { background: #fff !important; color: #333 !important; }
   body.print-informe .resumen-count { color: #000 !important; font-weight: 700 !important; }
   body.print-informe .resumen-count.zero { color: #bbb !important; font-weight: 400 !important; }
+  body.print-informe .resumen-pct { color: #666 !important; }
 }
 
 /* BANNER PENDIENTE */

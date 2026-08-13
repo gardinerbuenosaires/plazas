@@ -1161,9 +1161,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       tipoActual=tipoId;
       const badgeTipo=ti.badge?` <b style="background:${ti.color};color:#fff;font-size:10px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="${ti.label}">${ti.badge}</b>`:'';
       html+=`<tr><td>${nombre}${badgeTipo}</td>`;
+      // Total de asignaciones del mozo en el período: base del porcentaje de cada celda
+      const totalMozo=sectoresUsados.reduce((acc,s)=>acc+(sectorCount.get(`${mozoId}||${s}`)||0),0);
       sectoresUsados.forEach(s=>{
         const n=sectorCount.get(`${mozoId}||${s}`)||0;
-        html+=`<td><span class="resumen-count ${n===0?"zero":""}">${n||"—"}</span></td>`;
+        const pct=n>0&&totalMozo>0?` <span class="resumen-pct">(${Math.round(n*100/totalMozo)}%)</span>`:"";
+        html+=`<td><span class="resumen-count ${n===0?"zero":""}">${n||"—"}</span>${pct}</td>`;
       });
       const rots=rotSet.get(mozoId)?.size||0;
       html+=`<td><strong style="color:var(--gold2)">${rots}</strong></td></tr>`;
