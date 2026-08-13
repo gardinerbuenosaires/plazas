@@ -18,6 +18,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .tab-btn{flex:1;padding:11px 2px;border:none;background:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
 .tab-btn.active{color:var(--gold2);border-bottom-color:var(--gold)}
 #main{padding:14px;max-width:800px;margin:0 auto}
+/* La tabla de Estadísticas crece con la cantidad de sectores: le damos más ancho */
+body.tab-ancho #main{max-width:1200px}
 .tab-content{display:none}.tab-content.active{display:block}
 .section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
 .section-title{font-size:12px;font-weight:600;color:var(--gold);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -138,10 +140,17 @@ input[type=text]:focus{border-color:var(--gold)}
 
 .resumen-table{width:100%;border-collapse:collapse;font-size:12px}
 .resumen-table th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;padding:6px 8px;text-align:center;border-bottom:1px solid var(--border2);white-space:nowrap;position:sticky;top:0;z-index:1;background:var(--bg2)}
-.resumen-table th:first-child{text-align:left;position:sticky;left:0;z-index:2;background:var(--bg2)}
+.resumen-table th:first-child{text-align:left;position:sticky;left:0;z-index:2;background:var(--bg2);min-width:140px}
 .resumen-table td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:center}
-.resumen-table td:first-child{text-align:left;color:var(--text);font-weight:500;position:sticky;left:0;z-index:1;background:var(--bg2)}
+.resumen-table td:first-child{text-align:left;color:var(--text);font-weight:500;position:sticky;left:0;z-index:1;background:var(--bg2);min-width:140px;white-space:nowrap}
 .resumen-table tr:last-child td{border-bottom:none}
+/* En pantallas angostas, columnas más ajustadas para ganar ancho */
+@media (max-width:600px){
+  .resumen-table th,.resumen-table td{padding:6px 5px}
+  .resumen-table th:first-child,.resumen-table td:first-child{min-width:110px}
+}
+/* Fila separadora de grupo en Estadísticas (Largos, Cortados, Medios) */
+.resumen-table tr.grupo-tipo td{position:static;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;color:var(--text3);background:var(--bg);padding:10px 8px 4px;border-bottom:1px solid var(--border2)}
 .resumen-count{display:inline-block;min-width:22px;font-weight:600;color:var(--gold2)}
 .resumen-count.zero{color:var(--text3);font-weight:400}
 .hist-count-badge{display:inline-block;background:rgba(201,147,58,.15);border:1px solid var(--border2);color:var(--gold2);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;text-align:center}
@@ -234,6 +243,7 @@ select{appearance:none}
   body.print-informe .resumen-table th { background: #f0f0f0 !important; color: #333 !important; border-bottom: 2px solid #999 !important; position: static !important; }
   body.print-informe .resumen-table td { border-bottom-color: #ddd !important; }
   body.print-informe .resumen-table td:first-child { background: #fafafa !important; color: #000 !important; font-weight: 600 !important; position: static !important; }
+  body.print-informe .resumen-table tr.grupo-tipo td { background: #fff !important; color: #333 !important; }
   body.print-informe .resumen-count { color: #000 !important; font-weight: 700 !important; }
   body.print-informe .resumen-count.zero { color: #bbb !important; font-weight: 400 !important; }
 }

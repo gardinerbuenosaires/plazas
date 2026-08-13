@@ -1004,9 +1004,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
   // ── Parámetros configurables de Estadísticas (rango en días y tipo de mozo) ──
   // Para sumar un tipo nuevo alcanza con agregarlo acá: aparece solo en el
   // filtro del informe y en el modal de edición.
+  // El orden de esta lista manda en todos lados: filas de la tabla, chips
+  // del filtro y opciones del modal de edición.
   const TIPOS_MOZO=[
-    {id:"cortado",     label:"Cortado",            plural:"Cortados",           badge:"",   color:""},
     {id:"largo",       label:"Largo",              plural:"Largos",             badge:"L",  color:"#c03020"},
+    {id:"cortado",     label:"Cortado",            plural:"Cortados",           badge:"CO", color:"#5f6b78"},
     {id:"medioManana", label:"Medio turno mañana", plural:"Medio turno mañana", badge:"MM", color:"#c9933a"},
     {id:"medioNoche",  label:"Medio turno noche",  plural:"Medio turno noche",  badge:"MN", color:"#3c78b4"}
   ];
@@ -1032,7 +1034,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const t=mozos.find(m=>m.id===mozoId)?.tipoMozo;
     return TIPOS_MOZO.some(x=>x.id===t)?t:TIPO_MOZO_DEFAULT;
   }
-  function infoTipoMozo(id) { return TIPOS_MOZO.find(x=>x.id===id)||TIPOS_MOZO[0]; }
+  function infoTipoMozo(id) {
+    return TIPOS_MOZO.find(x=>x.id===id)||TIPOS_MOZO.find(x=>x.id===TIPO_MOZO_DEFAULT);
+  }
+  // Posición del tipo en TIPOS_MOZO; los desconocidos van al final
+  function ordenTipoMozo(id) {
+    const i=TIPOS_MOZO.findIndex(x=>x.id===id);
+    return i===-1?TIPOS_MOZO.length:i;
+  }
 
   // Poblar el select del modal desde TIPOS_MOZO (el script es module: el DOM ya está listo)
   (function poblarSelectTipo(){
@@ -1116,7 +1125,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
         mozosMap.set(h.mozoId, m?m.nombre:(h.mozoNombre||h.mozoId));
       }
     });
-    const mozosU=[...mozosMap.entries()].sort((a,b)=>a[1].localeCompare(b[1]));
+    // Orden: primero por tipo (según el orden de TIPOS_MOZO), después alfabético
+    const mozosU=[...mozosMap.entries()].sort((a,b)=>{
+      const oa=ordenTipoMozo(tipoDeMozo(a[0])), ob=ordenTipoMozo(tipoDeMozo(b[0]));
+      return oa!==ob?oa-ob:a[1].localeCompare(b[1]);
+    });
 
     // Conteo mozo×sector y rotaciones distintas por mozo
     const sectorCount=new Map();
@@ -1134,8 +1147,18 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     sectoresUsados.forEach(s=>html+=`<th>${s}</th>`);
     html+=`<th title="Rotaciones en las que participó">Rotaciones</th></tr></thead><tbody>`;
 
+    // Fila separadora por grupo, solo si hay más de un tipo en la tabla
+    const mostrarSeparadores=new Set(mozosU.map(([id])=>tipoDeMozo(id))).size>1;
+    const colspanTotal=sectoresUsados.length+2;
+    let tipoActual=null;
+
     mozosU.forEach(([mozoId,nombre])=>{
-      const ti=infoTipoMozo(tipoDeMozo(mozoId));
+      const tipoId=tipoDeMozo(mozoId);
+      const ti=infoTipoMozo(tipoId);
+      if(mostrarSeparadores&&tipoId!==tipoActual){
+        html+=`<tr class="grupo-tipo"><td colspan="${colspanTotal}">${ti.plural}</td></tr>`;
+      }
+      tipoActual=tipoId;
       const badgeTipo=ti.badge?` <b style="background:${ti.color};color:#fff;font-size:10px;padding:1px 4px;border-radius:3px;vertical-align:middle" title="${ti.label}">${ti.badge}</b>`:'';
       html+=`<tr><td>${nombre}${badgeTipo}</td>`;
       sectoresUsados.forEach(s=>{
@@ -2697,6 +2720,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
     document.getElementById("tab-"+id).classList.add("active");
     el.classList.add("active");
+    // Estadísticas necesita más ancho que el resto: la tabla crece con los sectores
+    document.body.classList.toggle("tab-ancho", id==="informe");
   };
 
   document.getElementById("nuevo-mozo").addEventListener("keydown",  e=>e.key==="Enter"&&window.agregarMozo());
