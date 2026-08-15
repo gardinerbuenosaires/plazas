@@ -288,6 +288,18 @@
         <div class="step-text">Para quitar la marca, tocar la <strong>×</strong> en la etiqueta <strong style="color:#f08070 !important">L Largo</strong> o volver a tocar el botón <strong style="color:#f08070 !important">L</strong>.</div>
       </div>
       <div class="tip">Los Largos se asignan después de las plazas fijas (📌) y antes del resto. Respetan restricciones (🚫) y asignaciones manuales previas.</div>
+      <p>Dentro del sector que le toca, el sistema elige la plaza <strong>distinta a la última</strong> que ocupó y, entre las que quedan, la que menos veces le tocó.</p>
+      <div class="warn">Si un Largo tiene restringidas todas las plazas de todos los sectores libres, queda fuera de esta etapa y entra en el reparto general junto al resto. En ese caso puede terminar compartiendo sector con otro Largo.</div>
+
+      <div class="divider"></div>
+      <h3>Tipo de turno</h3>
+      <p>Cada mozo puede clasificarse según el turno que hace. Se configura desde el <strong>modal de edición</strong>: tocar ✏️ o mantener presionado el nombre, y elegir en <strong>Tipo de turno</strong>.</p>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text"><strong>Largo</strong> · <strong>Cortado</strong> · <strong>Medio turno mañana</strong> · <strong>Medio turno noche</strong></div>
+      </div>
+      <div class="tip">Los mozos que nunca se clasificaron cuentan como <strong>Cortado</strong>, que es el valor por defecto.</div>
+      <div class="warn">Este campo es <strong style="color: white !important;">solo para Estadísticas</strong>: no interviene en la rotación. Lo que reparte a los Largos en sectores distintos es la marca <strong style="color:#f08070 !important">L</strong>, que es un campo aparte. Un mozo puede tener la L puesta y estar clasificado como Cortado, o al revés — conviene mantenerlos coherentes.</div>
 
       <div class="divider"></div>
       <h3>Mozos de barra</h3>
@@ -384,7 +396,7 @@
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <div class="step-text">Verificar que el aviso diga <strong>"Listo para rotar"</strong>. Esto indica que la cantidad de mozos activos coincide con la de plazas.</div>
+        <div class="step-text">Verificar que el aviso diga <strong>"Listo para rotar"</strong>. Esto indica que la cantidad de mozos activos coincide con la de plazas. Si ya asignaste algunos a mano, la cuenta es sobre los que quedan <strong style="color: white !important;">libres</strong>, no sobre el total.</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
@@ -457,22 +469,47 @@
 
       <div class="divider"></div>
       <h3>Lógica de la rotación</h3>
-      <p>El sistema busca que cada mozo <strong>avance al siguiente sector</strong> (o grupo) en el orden configurado. Además considera:</p>
+      <p>El sistema no va mozo por mozo eligiendo lo mejor para cada uno. Evalúa <strong style="color: white !important;">todas las combinaciones posibles</strong> de mozos y plazas a la vez, y se queda con la mejor del conjunto.</p>
+      <p>Por eso a veces un mozo no avanza al sector que le tocaba: si ceder esa plaza mejora el reparto general, el sistema lo hace. La decisión nunca se toma mirando a un mozo aislado.</p>
+
+      <div class="divider"></div>
+      <h3>Criterios, de mayor a menor peso</h3>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>No repetir la misma plaza exacta</strong> que la última vez que trabajó.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong>Avanzar al siguiente sector</strong> (o grupo) en el orden configurado. Cuanto más lejos queda del sector que le tocaba, más penaliza.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong>Evitar repetir sector</strong>, en los sectores que tengan esa opción activada.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text"><strong>Criterio semanal:</strong> no repetir la plaza que tuvo el mismo día de la semana anterior.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-text"><strong>Equilibrar:</strong> cuántas veces estuvo cada mozo en cada plaza.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-text"><strong>Orden circular:</strong> desempate final cuando todo lo demás da igual.</div>
+      </div>
+      <div class="tip">El criterio <strong>1</strong> pesa <strong style="color: white !important;">más</strong> que el <strong>2</strong>. Ante la duda, el sistema prefiere que el mozo no repita plaza antes que hacerlo avanzar al sector que le tocaba. Es la causa más común de una rotación que a simple vista parece equivocada.</div>
+
+      <div class="divider"></div>
+      <h3>Lo que se respeta siempre</h3>
+      <p>Esto no se pesa contra nada: son condiciones que el sistema no viola.</p>
       <div class="step">
         <div class="step-num">•</div>
-        <div class="step-text">Cantidad de veces que cada mozo estuvo en cada plaza (para equilibrar).</div>
+        <div class="step-text">Las <strong>restricciones</strong> (🚫) de cada mozo: nunca se asigna una plaza restringida.</div>
       </div>
       <div class="step">
         <div class="step-num">•</div>
-        <div class="step-text">La opción "evitar repetir sector" si está activada.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">•</div>
-        <div class="step-text">Las restricciones de cada mozo.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">•</div>
-        <div class="step-text">Las asignaciones manuales previas.</div>
+        <div class="step-text">Las <strong>asignaciones manuales previas</strong>: quedan intactas.</div>
       </div>
       <div class="step">
         <div class="step-num">•</div>
@@ -484,16 +521,36 @@
       </div>
       <div class="step">
         <div class="step-num">•</div>
-        <div class="step-text">Los grupos de sectores (sectores agrupados se tratan como uno).</div>
+        <div class="step-text">Los <strong>grupos de sectores</strong>: los sectores agrupados se tratan como uno solo.</div>
+      </div>
+
+      <div class="divider"></div>
+      <h3>Ventana de 30 días</h3>
+      <p>El equilibrio y el cálculo del último sector de cada mozo se hacen sobre los <strong style="color: white !important;">últimos 30 días</strong>. Lo anterior no influye en la rotación.</p>
+      <div class="tip">Un mozo que estuvo de licencia más de un mes arranca sin historial: para el sistema es como si fuera nuevo.</div>
+
+      <div class="divider"></div>
+      <h3>Criterio semanal</h3>
+      <p>Los días de más movimiento se evita repetir la plaza que el mozo tuvo <strong>el mismo día de la semana anterior</strong>.</p>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text">Turno <strong>Mañana</strong>: domingos.</div>
       </div>
       <div class="step">
         <div class="step-num">•</div>
-        <div class="step-text"><strong>Domingos (turno Mañana):</strong> se evita asignar a cada mozo la misma plaza que tuvo el domingo anterior.</div>
+        <div class="step-text">Turno <strong>Noche</strong>: jueves, viernes y sábados.</div>
       </div>
-      <div class="step">
-        <div class="step-num">•</div>
-        <div class="step-text"><strong>No repetir plaza del día anterior:</strong> el sistema penaliza fuertemente asignar a un mozo la misma plaza exacta que tuvo en el turno anterior del mismo tipo (Mañana o Noche).</div>
-      </div>
+      <div class="tip">Los días que aplica aparece un aviso arriba de la grilla recordándolo. El resto de los días el criterio no interviene.</div>
+
+      <div class="divider"></div>
+      <h3>Orden circular</h3>
+      <p>Cuando dos mozos empatan en todos los criterios anteriores, decide un contador interno que <strong>avanza una posición en cada rotación</strong>. Sin él siempre ganaría el mismo mozo ante la igualdad.</p>
+      <div class="tip">Es el motivo por el que dos días con la misma gente y las mismas plazas pueden dar resultados distintos.</div>
+
+      <div class="divider"></div>
+      <h3>Advertencias al generar</h3>
+      <p>Si una plaza queda sin ningún mozo que pueda ocuparla, aparece un cartel con el detalle al terminar de generar.</p>
+      <div class="warn">Casi siempre es por restricciones (🚫) demasiado amplias: no queda ningún mozo habilitado para esa plaza. Revisar las restricciones de los mozos disponibles o asignar esa plaza a mano.</div>
 
       <div class="divider"></div>
       <h3>Badge de repetición ↩</h3>
@@ -578,7 +635,7 @@
       <span class="arrow">▶</span>
     </button>
     <div class="section-body">
-      <p>Debajo de la grilla de operación hay cuatro campos de texto libre para registrar información del turno. Se pueden <strong style="color: white !important;">desactivar</strong> desde el switch en la pestaña <strong>Salón</strong>.</p>
+      <p>Debajo de la grilla de operación hay cinco campos de texto libre para registrar información del turno. Se pueden <strong style="color: white !important;">desactivar</strong> desde el switch en la pestaña <strong>Salón</strong>.</p>
       <div class="step">
         <div class="step-num">•</div>
         <div class="step-text"><strong>Pesca:</strong> información sobre la pesca del día.</div>
@@ -594,6 +651,10 @@
       <div class="step">
         <div class="step-num">•</div>
         <div class="step-text"><strong>Faltantes:</strong> productos o insumos que faltan.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text"><strong>Novedades:</strong> novedades generales del turno.</div>
       </div>
 
       <div class="divider"></div>
@@ -651,6 +712,57 @@
         <div class="step-num">6</div>
         <div class="step-text">Si alguna plaza tenía un <strong>comentario</strong> (💬), se muestra debajo del nombre del mozo.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ESTADISTICAS -->
+  <div class="section">
+    <button class="section-btn" onclick="toggle(this)">
+      <span><span class="icon">📊</span>Estadísticas</span>
+      <span class="arrow">▶</span>
+    </button>
+    <div class="section-body">
+      <p>Una tabla con <strong>cuántas veces estuvo cada mozo en cada sector</strong> durante el período elegido. Sirve para detectar repartos desparejos.</p>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text">Cada fila es un mozo, cada columna un sector.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text">Cada celda muestra la cantidad de veces y, entre paréntesis, <strong>qué porcentaje representa</strong> sobre el total de ese mozo. Los porcentajes de una fila suman 100%, con un punto de diferencia según el redondeo.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text">La última columna, <strong>Rotaciones</strong>, es en cuántas rotaciones participó el mozo en total.</div>
+      </div>
+      <div class="warn">La tabla muestra <strong style="color: white !important;">solo el turno abierto</strong>. Entrando por el link de Mañana no se ven las plazas que los mozos hicieron de Noche, y al revés.</div>
+
+      <div class="divider"></div>
+      <h3>Período</h3>
+      <p>El desplegable de arriba permite elegir entre los últimos <strong>7, 15, 30, 60 o 90 días</strong>. Por defecto son 30.</p>
+      <div class="tip">La elección se recuerda en el dispositivo: la próxima vez que entres, sigue como la dejaste.</div>
+
+      <div class="divider"></div>
+      <h3>Filtrar por tipo de mozo</h3>
+      <p>Los chips debajo del período permiten mostrar u ocultar cada tipo. Se pueden combinar: tocá los que quieras ver.</p>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text"><strong>Todos</strong> vuelve a mostrar los cuatro tipos de una vez.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">•</div>
+        <div class="step-text">Si apagás todos, la tabla queda vacía hasta que prendas alguno.</div>
+      </div>
+      <div class="tip">El tipo de cada mozo se configura en <strong>Personal</strong>, desde el modal de edición.</div>
+
+      <div class="divider"></div>
+      <h3>Agrupación</h3>
+      <p>Las filas se ordenan por tipo —primero Largos, después Cortados, después los medios turnos— y alfabéticamente dentro de cada grupo. Cuando hay más de un tipo a la vista aparece una banda con el nombre de cada grupo.</p>
+      <p>Junto a cada nombre va una etiqueta con su tipo: <strong>L</strong>, <strong>CO</strong>, <strong>MM</strong> o <strong>MN</strong>.</p>
+
+      <div class="divider"></div>
+      <h3>Imprimir</h3>
+      <p>El botón <strong>🖨 Imprimir</strong> genera una versión en blanco y negro de la tabla. El período y el filtro aplicados quedan escritos en el título.</p>
     </div>
   </div>
 
