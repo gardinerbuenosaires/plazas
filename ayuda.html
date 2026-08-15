@@ -158,6 +158,54 @@
     }
     p { font-size: 14px; margin-bottom: 10px; }
     p:last-child { margin-bottom: 0; }
+
+    /* ── AYUDA DE MEMORIA (para exponer en reunión) ───────────────────── */
+    .memo-h { font-size: 13px; color: var(--gold2); font-weight: 700; text-transform: uppercase;
+              letter-spacing: .6px; margin: 18px 0 8px; padding-bottom: 5px;
+              border-bottom: 1px solid var(--border2); }
+    .memo-h:first-child { margin-top: 0; }
+    .memo-list { list-style: none; margin-bottom: 4px; }
+    .memo-list li { font-size: 13.5px; line-height: 1.5; padding: 4px 0 4px 16px;
+                    position: relative; }
+    .memo-list li::before { content: "–"; position: absolute; left: 0; color: var(--text3); }
+    .memo-list li b { color: var(--gold2); font-weight: 600; }
+    .memo-num { counter-reset: memo; }
+    .memo-num li { padding-left: 26px; }
+    .memo-num li::before { counter-increment: memo; content: counter(memo);
+                           left: 0; top: 4px; width: 18px; height: 18px; font-size: 11px;
+                           color: var(--gold2); border: 1px solid var(--gold);
+                           border-radius: 50%; display: flex; align-items: center;
+                           justify-content: center; }
+    .memo-q { font-size: 13.5px; margin-bottom: 10px; padding-left: 14px;
+              border-left: 2px solid var(--border2); }
+    .memo-q b { display: block; color: var(--gold2); font-weight: 600; margin-bottom: 1px; }
+    .memo-key { background: rgba(201,147,58,.12); border: 1px solid var(--gold);
+                border-radius: 8px; padding: 10px 14px; font-size: 13.5px; margin: 10px 0; }
+
+    /* ── IMPRESIÓN ────────────────────────────────────────────────────── */
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      .container { max-width: 100%; padding: 0; }
+      .back-link, .section-btn .arrow { display: none !important; }
+      .header { border-bottom: 1px solid #999; }
+      .header h1, .header small { color: #000 !important; }
+      /* Todo el manual se imprime desplegado */
+      .section-body { display: block !important; background: #fff !important;
+                      border-color: #ccc !important; }
+      .section-btn { background: #f0f0f0 !important; color: #000 !important;
+                     border-color: #999 !important; }
+      h3, .memo-h, .memo-q b, .memo-list li b { color: #000 !important; }
+      .tip, .warn, .memo-key { background: #f7f7f7 !important; border-color: #999 !important;
+                               color: #000 !important; }
+      .step-num, .memo-num li::before { color: #000 !important; border-color: #666 !important;
+                                        background: none !important; }
+      .step, .memo-list li, .memo-q { break-inside: avoid; page-break-inside: avoid; }
+      /* Hoja en blanco antes de la ayuda de memoria */
+      .page-blank { page-break-before: always; height: 60vh; }
+      #memo { page-break-before: always; }
+      #btn-imprimir-memo { display: none !important; }
+    }
+    .page-blank { display: none; }
   </style>
 </head>
 <body>
@@ -854,6 +902,98 @@
         <div class="step-num">8</div>
         <div class="step-text">Si un mozo va <strong style="color: white !important;">siempre al mismo lugar</strong>, usar <strong>Plaza fija</strong> (📌) en vez de asignar manualmente cada vez.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- HOJA EN BLANCO (solo al imprimir) -->
+  <div class="page-blank"></div>
+
+  <!-- AYUDA DE MEMORIA -->
+  <div class="section open" id="memo">
+    <button class="section-btn" onclick="toggle(this)">
+      <span><span class="icon">🗣️</span>Ayuda de memoria — explicar la rotación</span>
+      <span class="arrow">▶</span>
+    </button>
+    <div class="section-body">
+      <p style="color:var(--text3);font-size:12.5px">Punteo para exponer cómo rota el sistema. Títulos cortos, para tener a mano y no olvidar nada.</p>
+      <button class="section-btn" id="btn-imprimir-memo" onclick="window.print()" style="font-size:13px;margin:10px 0 4px">
+        <span>🖨 Imprimir manual + ayuda de memoria</span>
+      </button>
+
+      <div class="memo-h">1 · La idea en una frase</div>
+      <div class="memo-key">El sistema no busca la mejor plaza para cada uno por separado: busca <b>la mejor combinación del grupo completo</b>. A veces uno cede para que el conjunto quede mejor.</div>
+
+      <div class="memo-h">2 · Orden en que se asigna</div>
+      <ol class="memo-list memo-num">
+        <li><b>Asignaciones manuales</b> hechas antes de generar</li>
+        <li><b>Plazas fijas</b> (📌)</li>
+        <li><b>Largos</b> (L) — uno por sector, nunca dos juntos</li>
+        <li><b>El resto</b> del equipo</li>
+      </ol>
+
+      <div class="memo-h">3 · Criterios, de mayor a menor peso</div>
+      <ol class="memo-list memo-num">
+        <li><b>No repetir</b> la misma plaza exacta de la última vez</li>
+        <li><b>Avanzar</b> al siguiente sector del orden configurado</li>
+        <li><b>Evitar repetir sector</b>, donde esté activado</li>
+        <li><b>Criterio semanal</b> — domingo (mañana) · jueves, viernes y sábado (noche)</li>
+        <li><b>Equilibrio</b> — cuántas veces estuvo en cada plaza</li>
+        <li><b>Turno circular</b> — desempate final</li>
+      </ol>
+      <div class="memo-key">El <b>1 pesa más que el 2</b>. Por eso alguien puede no avanzar de sector: se estaba evitando que repitiera plaza. Es la explicación de casi todas las dudas.</div>
+
+      <div class="memo-h">4 · Lo que nunca se viola</div>
+      <ul class="memo-list">
+        <li><b>Restricciones</b> (🚫) — jamás se asigna una plaza restringida</li>
+        <li><b>Asignaciones manuales</b> — quedan intactas</li>
+        <li><b>Plazas fijas</b> — se respetan siempre</li>
+        <li><b>Dos Largos</b> nunca comparten sector</li>
+      </ul>
+
+      <div class="memo-h">5 · Lo que el sistema NO mira</div>
+      <ul class="memo-list">
+        <li><b>Antigüedad</b> ni fecha de ingreso</li>
+        <li><b>Edad</b></li>
+        <li><b>Nombre</b> ni orden alfabético</li>
+        <li><b>Rendimiento</b>, ventas o propinas</li>
+        <li><b>Simpatía</b>, pedidos personales o quejas</li>
+        <li><b>Azar</b> — no hay ningún sorteo</li>
+        <li><b>Lista de preferidos</b> — no existe</li>
+      </ul>
+      <div class="memo-key">Los <b>únicos datos</b> que entran en la decisión: dónde estuvo la última vez, cuántas veces estuvo en cada plaza en 30 días, sus restricciones, y el turno circular. Nada más.</div>
+
+      <div class="memo-h">6 · Datos duros para respaldar</div>
+      <ul class="memo-list">
+        <li><b>Ventana de 30 días</b> — lo anterior no pesa</li>
+        <li><b>Es determinista</b> — mismos datos, mismo resultado, siempre</li>
+        <li><b>Evalúa todas las combinaciones</b>, no va uno por uno agarrando lo primero</li>
+        <li><b>Mañana y noche</b> se calculan por separado</li>
+        <li><b>Todo queda registrado</b> — Historial y Estadísticas</li>
+        <li><b>Estadísticas muestra porcentajes</b> por mozo y sector: la prueba está a la vista</li>
+      </ul>
+
+      <div class="memo-h">7 · Respuestas rápidas</div>
+      <div class="memo-q"><b>"Me tocó dos veces la misma plaza"</b>Es justo lo que más se penaliza. Si igual pasó, la alternativa dejaba a otro peor. Lo miramos en Estadísticas.</div>
+      <div class="memo-q"><b>"Nunca avanzo de sector"</b>No repetir plaza pesa más que avanzar. Puede frenar el avance un día, no varios seguidos. Lo verificamos.</div>
+      <div class="memo-q"><b>"A fulano lo favorecen"</b>El sistema no sabe quién es fulano. No tiene nombres, antigüedad ni preferencias. Miremos los porcentajes.</div>
+      <div class="memo-q"><b>"Siempre me toca lo peor"</b>Abramos Estadísticas a 90 días y lo vemos con números, no con impresiones.</div>
+      <div class="memo-q"><b>"El sistema está arreglado"</b>No hay azar ni favoritos. Con los mismos datos da siempre exactamente lo mismo. Se puede comprobar.</div>
+      <div class="memo-q"><b>"¿Por qué él siempre tiene la misma plaza?"</b>Tiene plaza fija (📌). Es una decisión del encargado, no del sistema, y está a la vista.</div>
+
+      <div class="memo-h">8 · Lo que sí decide una persona</div>
+      <p style="font-size:13.5px">Conviene decirlo de frente: el sistema reparte, pero hay decisiones humanas que lo condicionan.</p>
+      <ul class="memo-list">
+        <li>Activar o desactivar mozos del día</li>
+        <li>Asignar a mano antes de generar</li>
+        <li>Poner una plaza fija (📌)</li>
+        <li>Poner una restricción (🚫)</li>
+        <li>Marcar a alguien como Largo (L)</li>
+        <li>Definir el orden de los sectores</li>
+      </ul>
+      <div class="memo-key">Todas esas decisiones <b>quedan registradas</b> en el historial. Reconocerlo de entrada hace creíble todo lo demás.</div>
+
+      <div class="memo-h">9 · Cierre</div>
+      <div class="memo-key">Invitarlos a mirar <b>Estadísticas</b> juntos, con el filtro en 90 días. El que tenga una duda concreta, que la traiga con nombre y sector: se responde con la tabla.</div>
     </div>
   </div>
 
