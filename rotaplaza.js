@@ -353,12 +353,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const p3ok=manualesHoy.length>0;
     const p3txt=p3ok?`${manualesHoy.length} asignada${manualesHoy.length!==1?"s":""} ✓`:"ninguna (opcional)";
 
-    // Paso 4: balance mozos/plazas
-    const deficit=slots.length-mDisp.length;
+    // Paso 4: balance mozos/plazas — mismo criterio que habilita el boton (libres, no totales)
+    const yaAsignados=new Set(slots.filter(sl=>asignaciones[sl.slotId]).map(sl=>asignaciones[sl.slotId].mozoId));
+    const libresMozos=mDisp.filter(m=>!yaAsignados.has(m.id)).length;
+    const libresPlazas=slots.filter(sl=>!asignaciones[sl.slotId]).length;
+    const deficit=libresPlazas-libresMozos;
     const p4ok=deficit===0;
     const p4class=p4ok?'ok':'warn';
     const p4txt=p4ok
-      ?`${mDisp.length} mozos / ${slots.length} plazas ✓`
+      ?`${libresMozos} mozos / ${libresPlazas} plazas ✓`
       :deficit>0
         ?`faltan ${deficit} mozo${deficit!==1?"s":""} ⚠`
         :`sobran ${-deficit} mozo${-deficit!==1?"s":""} ⚠`;
@@ -404,7 +407,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
   function renderAll() {
     renderStats(); renderAvisoGlobal(); renderAvisoRotacion(); renderUltimaRotacion(); renderPasosPrevios();
     const btnLib=document.getElementById("btn-liberar-todo");
-    if(btnLib) btnLib.style.display=Object.keys(asignaciones).length>0?"inline-block":"none";
+    // Visible tambien sin asignaciones si la formacion sigue bloqueada: es la unica salida del candado
+    if(btnLib) btnLib.style.display=(Object.keys(asignaciones).length>0||formacionBloqueada)?"inline-block":"none";
     renderSectoresGrid(); renderLibres(); renderPersonal(); renderSectoresConfig(); renderBarraGrid(); renderPeonesGrid(); renderInforme();
     ["nota-pesca","nota-dolar","nota-sugerencia","nota-faltantes","nota-novedades"].forEach(id=>{const el=document.getElementById(id);if(el) el.disabled=formacionBloqueada;});
     const ns=document.getElementById("notas-section"); if(ns) ns.style.display=notasActivas?"":"none";
@@ -1415,7 +1419,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     }
     btn.style.display="";
 
-    if(formacionBloqueada){ btn.textContent="⚡ GENERAR PLAZA";btn.disabled=true;btn.style.opacity=".4";aviso.style.display="none";hint.style.display="none"; return; }
+    if(formacionBloqueada){
+      btn.textContent="⚡ GENERAR PLAZA";btn.disabled=true;btn.style.opacity=".4";hint.style.display="none";
+      const editable=editableHastaLocal&&Date.now()<editableHastaLocal;
+      aviso.style.display="block";
+      aviso.innerHTML=`<div class="aviso info"><strong>🔒 Formación confirmada</strong>Ya hay una rotación guardada para este turno. ${editable?"Tocá <strong>✏️ Editar</strong> para modificarla":"Tocá <strong>🔓 Liberar todo</strong> para empezar una nueva"}.</div>`;
+      return;
+    }
 
     const mDisp=mozos.filter(m=>isDisp(m));
     const slots=getSlots();
@@ -1428,12 +1438,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     const nLibres=mozosLibres.length, pLibres=slotsLibres.length;
 
     if(pLibres===0&&totalSlots>0){
-      if(!pendingHistorial){
+      if(!pendingHistorial||pendingHistorial.length===0){
         aviso.style.display="block";hint.style.display="none";
         aviso.innerHTML=`<div class="aviso info"><strong>✅ Asignación completa</strong>Todas las plazas están asignadas manualmente. Confirmá para guardar la rotación.</div>`;
         btn.disabled=false;btn.style.opacity="1";btn.textContent="💾 CONFIRMAR ROTACIÓN";
       } else {
-        aviso.style.display="none";hint.style.display="none";
+        aviso.style.display="block";hint.style.display="none";
+        aviso.innerHTML=`<div class="aviso info"><strong>⏳ Rotación pendiente</strong>Ya hay una rotación generada sin confirmar. Usá el banner de arriba para <strong>confirmarla</strong> o <strong>descartarla</strong>.</div>`;
         btn.disabled=true;btn.style.opacity=".4";btn.textContent="⚡ GENERAR PLAZA";
       }
       return;
@@ -1452,10 +1463,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       aviso.innerHTML=`<div class="aviso info"><strong>✅ Listo para rotar</strong>${nLibres} mozo${nLibres>1?"s":""} · ${pLibres} plaza${pLibres>1?"s":""}${infoPreAsig}.</div>`;
     } else if(nLibres<pLibres){
       btn.disabled=true;btn.style.opacity=".4";
-      aviso.innerHTML=`<div class="aviso warn"><strong>⚠️ Menos mozos que plazas</strong>${nLibres} mozo${nLibres>1?"s":""} para ${pLibres} plazas${infoPreAsig}. Ajustá en Mozos o Plazas.</div>`;
+      const nombresPlazas=slotsLibres.map(sl=>sl.ssNombre||sl.sectorNombre).join(", ");
+      aviso.innerHTML=`<div class="aviso warn"><strong>⚠️ Menos mozos que plazas</strong>${nLibres} mozo${nLibres>1?"s":""} para ${pLibres} plazas${infoPreAsig}. Plazas libres: ${nombresPlazas}. Ajustá en Mozos o Plazas.</div>`;
     } else {
       btn.disabled=true;btn.style.opacity=".4";
-      aviso.innerHTML=`<div class="aviso warn"><strong>⚠️ Más mozos que Plazas</strong>${nLibres} mozos para ${pLibres} plazas${infoPreAsig}. Ajustá en Mozos o Plazas.</div>`;
+      const nombresMozos=mozosLibres.map(m=>m.nombre).join(", ");
+      aviso.innerHTML=`<div class="aviso warn"><strong>⚠️ Más mozos que Plazas</strong>${nLibres} mozos para ${pLibres} plazas${infoPreAsig}. Mozos sin plaza: ${nombresMozos}. Ajustá en Mozos o Plazas.</div>`;
     }
   }
 
@@ -1917,8 +1930,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
   };
   window.liberarTodo = async function() {
     const ocupadas=Object.keys(asignaciones);
-    if(ocupadas.length===0) return;
-    if(!confirm(`¿Liberar los ${ocupadas.length} slot${ocupadas.length>1?"s":""} asignados (mozos, barra y peones)?`)) return;
+    if(ocupadas.length===0&&!formacionBloqueada) return;
+    const msgLib=ocupadas.length>0
+      ?`¿Liberar los ${ocupadas.length} slot${ocupadas.length>1?"s":""} asignados (mozos, barra y peones)?`
+      :"No hay slots asignados, pero la formación sigue bloqueada. ¿Desbloquear para generar una nueva plaza?";
+    if(!confirm(msgLib)) return;
     const batch=writeBatch(db);
     ocupadas.forEach(id=>batch.delete(doc(asigCol,id)));
     batch.set(doc(db,"meta","notas"+metaSuffix),{pesca:"",dolar:"",sugerencia:"",faltantes:"",novedades:""});
@@ -1938,6 +1954,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     document.getElementById("acciones-formacion").style.display="none";
     renderFeedbackStrip();
     ocultarBannerPendiente();
+    // Sin asignaciones borradas no llega el snapshot de asigCol: refrescamos a mano
+    renderAll();
   };
 
   // ===================== RESTRICCIONES =====================
