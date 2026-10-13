@@ -750,7 +750,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       const fijaTag=fijaSlot?(()=>{
         const sl=fijaSlot;
         const label=sl.ssNombre?`${sl.sectorNombre} › ${sl.ssNombre}`:sl.sectorNombre;
-        return `<span class="rest-tag" style="border-color:var(--gold);color:var(--gold2)">📌 ${label} <button onclick="setPlazaFija('${m.id}',null)">×</button></span>`;
+        const inactiva=!getSlots().some(s=>s.slotId===sl.slotId);
+        return `<span class="rest-tag" style="border-color:${inactiva?"var(--orange)":"var(--gold)"};color:${inactiva?"#e8903a":"var(--gold2)"}">📌 ${label}${inactiva?" ⚠️ inactiva en este turno, no se aplica":""} <button onclick="setPlazaFija('${m.id}',null)">×</button></span>`;
       })():"";
       const largoTag=m.largo?`<span class="rest-tag" style="border-color:#e06050;color:#f08070"><b>L</b> Largo <button onclick="toggleLargo('${m.id}',false)">×</button></span>`:"";
       const restTags=getRest(m).filter(slotId=>!huerfanas.includes(slotId)).map(slotId=>{
@@ -2044,6 +2045,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
     fijaMozoId=mozoId;
     const mozo=mozos.find(m=>m.id===mozoId);
     const slots=getSlots(false);
+    // Los inactivos en este turno no se pueden aplicar al generar: se marcan para no confundirlos con el activo homónimo
+    const activos=new Set(getSlots().map(s=>s.slotId));
     document.getElementById("fija-title").textContent="📌 "+mozo.nombre;
     const opc=document.getElementById("fija-opciones");
     if(slots.length===0){opc.innerHTML=`<div class="empty">No hay slots.</div>`;return;}
@@ -2051,7 +2054,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
       <span style="flex:1;font-size:12px;color:var(--text)">— Sin plaza fija —</span>
       <button class="btn ${!mozo.plazaFija?"btn-gold":"btn-ghost"}" onclick="setPlazaFija('${mozoId}',null)">${!mozo.plazaFija?"✓ Actual":"Quitar"}</button>
     </div>`+slots.map(sl=>{
-      const label=sl.ssNombre?`${sl.sectorNombre} › ${sl.ssNombre}`:sl.sectorNombre;
+      const label=(sl.ssNombre?`${sl.sectorNombre} › ${sl.ssNombre}`:sl.sectorNombre)+(activos.has(sl.slotId)?"":" ⛔ inactivo en este turno");
       const selected=mozo.plazaFija===sl.slotId;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--bg);border:1px solid ${selected?"var(--gold)":"var(--border)"};margin-bottom:6px">
         <span style="flex:1;font-size:12px;color:${selected?"var(--gold2)":"var(--text)"}">${label}</span>
